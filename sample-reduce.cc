@@ -9,13 +9,11 @@ struct vecinit
 	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::global_buffer>;
 
 	int nels;
-	// LESSON LEARNED: this _has_ to be an accessor, you can't just store the address of the first element you get
-	// by dereferencing the accessor!
 	accessor vec;
 
-	vecinit(int nels_, accessor& vec_) :
-		nels(nels_),
-		vec(vec_)
+	vecinit(cl::sycl::handler& hand, cl::sycl::buffer<int>& buf) :
+		nels(buf.get_count()),
+		vec(buf.get_access<cl::sycl::access::mode::discard_write>(hand))
 	{}
 
 	void operator()(cl::sycl::item<1> item) {
@@ -38,8 +36,18 @@ struct reduce
 	accessor_out out;
 	accessor_lmem lmem;
 
-	reduce(int nels_, accessor_in in_, accessor_out out_, accessor_lmem lmem_) :
-		nels(nels_), in(in_), out(out_), lmem(lmem_)
+	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& in_, cl::sycl::buffer<int>& out_, int lws) :
+		nels(in_.get_count()),
+		in(in_.get_access<cl::sycl::access::mode::read>(hand)),
+		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
+		lmem(accessor_lmem(lws, hand))
+	{}
+
+	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& out_, int lws) :
+		nels(out_.get_count()),
+		in(out_.get_access<cl::sycl::access::mode::read>(hand)),
+		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
+		lmem(accessor_lmem(lws, hand))
 	{}
 
 	void operator()(cl::sycl::nd_item<1> item) {
@@ -100,27 +108,16 @@ int main(int argc, char *argv[]) try {
 	/* enqueue vecinit */
 	std::cout << "Submit init ..." << std::endl;
 	auto init_evt = q.submit([&](cl::sycl::handler& hand) {
-		auto vec = d_vec.get_access<cl::sycl::access::mode::discard_write>(hand);
-
-		auto kernel = vecinit(nels, vec);
-		hand.parallel_for(cl::sycl::range<1>(nels), kernel);
+		hand.parallel_for(cl::sycl::range<1>(nels), vecinit(hand, d_vec));
 	});
 
 	std::cout << "Submit reduce (" + std::to_string(nwg) + "/" + std::to_string(lws) + ") ..." << std::endl;
 	auto reduce_pass1_evt = q.submit([&](cl::sycl::handler& hand) {
-		auto in = d_vec.get_access<cl::sycl::access::mode::read>(hand);
-		auto out = d_red.get_access<cl::sycl::access::mode::write>(hand);
-		auto lmem = reduce<int>::accessor_lmem(lws, hand);
-
-		hand.parallel_for(cl::sycl::nd_range<1>(lws*nwg, lws), reduce<int>(nels, in, out, lmem));
+		hand.parallel_for(cl::sycl::nd_range<1>(lws*nwg, lws), reduce<int>(hand, d_vec, d_red, lws));
 	});
 
 	auto reduce_pass2_evt = q.submit([&](cl::sycl::handler& hand) {
-		auto in = d_red.get_access<cl::sycl::access::mode::read>(hand);
-		auto out = d_red.get_access<cl::sycl::access::mode::write>(hand);
-		auto lmem = reduce<int>::accessor_lmem(lws, hand);
-
-		hand.parallel_for(cl::sycl::nd_range<1>(lws, lws), reduce<int>(nwg, in, out, lmem));
+		hand.parallel_for(cl::sycl::nd_range<1>(lws, lws), reduce<int>(hand, d_red, lws));
 	});
 
 
