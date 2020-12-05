@@ -26,7 +26,7 @@ LDLIBS += -lOpenCL
 
 
 
-TARGETS = sample sample-select sample-reduce
+TARGETS = sample sample-select sample-reduce syclinfo
 
 all: $(TARGETS)
 
