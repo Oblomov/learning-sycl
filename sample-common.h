@@ -55,7 +55,7 @@ public:
 
 		err = clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, 0, NULL, &n);
 		if (err != CL_SUCCESS || d_num >= n)
-			throw std::runtime_error("cannnot select OpenCL devie #" + std::to_string(d_num) +
+			throw std::runtime_error("cannnot select OpenCL device #" + std::to_string(d_num) +
 				" (err: " + std::to_string(err) + ")");
 		cl_device_id *devs = new cl_device_id[n];
 		err = clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, n, devs, NULL);
