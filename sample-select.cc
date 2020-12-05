@@ -18,7 +18,7 @@ struct vecinit
 		vec(vec_)
 	{}
 
-	void operator()(cl::sycl::item<1> item) {
+	void operator()(cl::sycl::item<1> item) const {
 		int i = item.get_id(0);
 		if (i < nels) {
 			vec[i] = nels - i;

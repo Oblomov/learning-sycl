@@ -16,7 +16,7 @@ struct vecinit
 		vec(buf.get_access<cl::sycl::access::mode::discard_write>(hand))
 	{}
 
-	void operator()(cl::sycl::item<1> item) {
+	void operator()(cl::sycl::item<1> item) const {
 		int i = item.get_id(0);
 		if (i < nels) {
 			vec[i] = 17;
@@ -50,7 +50,7 @@ struct reduce
 		lmem(accessor_lmem(lws, hand))
 	{}
 
-	void operator()(cl::sycl::nd_item<1> item) {
+	void operator()(cl::sycl::nd_item<1> item) const {
 		int gi = item.get_global_id(0);
 		T acc = T(0);
 		while (gi < nels) {
