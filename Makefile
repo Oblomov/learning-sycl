@@ -1,6 +1,7 @@
-CXX ?= compute++
+# Override with `make CXX=/path/to/compiler`
+CXX := compute++
 
-SYCL_PATH != dirname $$(which $(CXX))
+SYCL_PATH != dirname $$(which $(CXX) || echo .)
 CXX_Model != $(CXX) --version | head -n1 | cut -f2 -d\ 
 
 CXXFLAGS_ComputeCpp = -sycl-driver
