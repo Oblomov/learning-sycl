@@ -5,6 +5,10 @@
 #include <string>
 
 #include <CL/sycl.hpp>
+#if SYCL_LANGUAGE_VERSION >= 202001
+#include <CL/sycl/backend/opencl.hpp>
+#include <CL/sycl/backend/cuda.hpp>
+#endif
 
 /* Device selector that uses OCL_PLATFORM and OCL_DEVICE environment variable
  * to select an OpenCL platform and device. If none has been requested,
@@ -93,7 +97,11 @@ public:
 		if (device.is_host()) {
 			if (p) return -1;
 			else return 1000;
+#if SYCL_LANGUAGE_VERSION < 202001
 		} else if (device.get() == d) return 100;
+#else
+		} else if (sycl::get_native<sycl::backend::opencl>(device) == d) return 100;
+#endif
 		return -1;
 	}
 };
