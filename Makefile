@@ -1,7 +1,12 @@
 # Override with `make CXX=/path/to/compiler`
 CXX := compute++
+# fallback in case not found
+CXX_ := dpcpp
 
-SYCL_PATH != dirname $$(which $(CXX) || echo .)
+CXX != command -v $(CXX)
+CXX := $(CXX)$(CXX_$(CXX))
+
+SYCL_PATH != dirname $$(command -v $(CXX) || echo .)
 CXX_Model != $(CXX) --version | head -n1 | cut -f2 -d\ 
 
 CXXFLAGS_ComputeCpp = -sycl-driver
