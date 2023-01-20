@@ -6,8 +6,8 @@
 
 #include <CL/sycl.hpp>
 #if SYCL_LANGUAGE_VERSION >= 202001
-#include <CL/sycl/backend/opencl.hpp>
-#include <CL/sycl/backend/cuda.hpp>
+#include <sycl/backend/opencl.hpp>
+#include <sycl/backend/cuda.hpp>
 #endif
 
 /* Device selector that uses OCL_PLATFORM and OCL_DEVICE environment variable

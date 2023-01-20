@@ -1,9 +1,9 @@
-# Override with `make CXX=/path/to/compiler`
-CXX := compute++
-# fallback in case not found
-CXX_ := dpcpp
+# Known SYCL compilers. Override with `make CXX=/path/to/compiler`
+CXX := compute++ icpx dpcpp
+CXX_ := icpx
 
-CXX != command -v $(CXX)
+CXX != for s in ${CXX} ; do command -v $$s && break ; done
+
 CXX := $(CXX)$(CXX_$(CXX))
 
 SYCL_PATH != dirname $$(command -v $(CXX) || echo .)
@@ -13,7 +13,7 @@ CXXFLAGS_ComputeCpp = -sycl-driver
 CXXFLAGS_oneAPI = -fsycl
 
 CXXFLAGS ?=
-CXXFLAGS += -g -Wall
+CXXFLAGS += -g -Wall -O3
 CXXFLAGS += $(CXXFLAGS_${CXX_Model})
 
 CPPFLAGS ?=
