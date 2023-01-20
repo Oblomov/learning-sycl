@@ -11,6 +11,7 @@ CXX_Model != $(CXX) --version | head -n1 | cut -f2 -d\
 
 CXXFLAGS_ComputeCpp = -sycl-driver
 CXXFLAGS_oneAPI = -fsycl
+CXXFLAGS_clang = -fsycl
 
 CXXFLAGS ?=
 CXXFLAGS += -g -Wall -O3
