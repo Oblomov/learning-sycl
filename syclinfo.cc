@@ -11,7 +11,11 @@ int main(int argc, char *argv[])
 
 	for (size_t i = 0; i < np; ++i) {
 		const auto& p = platforms[i];
-		std::cout << "Platform #" << i << ": " << p.get_info<sycl::info::platform::name>() << std::endl;
+		std::cout << "Platform #" << i
+#if SYCL_LANGUAGE_VERSION >= 202001
+			<< " [" << p.get_backend() <<"]\t"
+#endif
+			<< ": " << p.get_info<sycl::info::platform::name>() << std::endl;
 
 		auto devices = p.get_devices();
 		const size_t nd = devices.size();
