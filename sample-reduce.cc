@@ -6,13 +6,13 @@
 
 struct vecinit
 {
-	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::global_buffer>;
+	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::device>;
 
 	int nels;
 	accessor vec;
 
 	vecinit(cl::sycl::handler& hand, cl::sycl::buffer<int>& buf) :
-		nels(buf.get_count()),
+		nels(buf.size()),
 		vec(buf.get_access<cl::sycl::access::mode::discard_write>(hand))
 	{}
 
@@ -27,9 +27,9 @@ struct vecinit
 template<typename T>
 struct reduce
 {
-	using accessor_in   = cl::sycl::accessor<T, 1, cl::sycl::access::mode::read,       cl::sycl::access::target::global_buffer>;
-	using accessor_out  = cl::sycl::accessor<T, 1, cl::sycl::access::mode::write,      cl::sycl::access::target::global_buffer>;
-	using accessor_lmem = cl::sycl::accessor<T, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local>;
+	using accessor_in   = cl::sycl::accessor<T, 1, cl::sycl::access::mode::read,       cl::sycl::access::target::device>;
+	using accessor_out  = cl::sycl::accessor<T, 1, cl::sycl::access::mode::write,      cl::sycl::access::target::device>;
+	using accessor_lmem = cl::sycl::local_accessor<T, 1>;
 
 	int nels;
 	accessor_in in;
@@ -37,14 +37,14 @@ struct reduce
 	accessor_lmem lmem;
 
 	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& in_, cl::sycl::buffer<int>& out_, int lws) :
-		nels(in_.get_count()),
+		nels(in_.size()),
 		in(in_.get_access<cl::sycl::access::mode::read>(hand)),
 		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
 		lmem(accessor_lmem(lws, hand))
 	{}
 
 	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& out_, int lws) :
-		nels(out_.get_count()),
+		nels(out_.size()),
 		in(out_.get_access<cl::sycl::access::mode::read>(hand)),
 		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
 		lmem(accessor_lmem(lws, hand))
@@ -89,13 +89,11 @@ int main(int argc, char *argv[]) try {
 
 	/* init queue */
 
-	env_device_selector sel;
-	cl::sycl::queue q(sel, {cl::sycl::property::queue::enable_profiling()});
+	cl::sycl::queue q(env_device_selector, {cl::sycl::property::queue::enable_profiling()});
 
 	auto q_dev = q.get_device();
 	auto dev_cus = q_dev.get_info<cl::sycl::info::device::max_compute_units>();
 
-	std::cout << "Host? " << (q.is_host() ? "true" : "false") << std::endl;
 	std::cout << "Platform name: " << q_dev.get_platform().get_info<cl::sycl::info::platform::name>() << std::endl;
 	std::cout << "Device name: " << q_dev.get_info<cl::sycl::info::device::name>() << std::endl;
 	std::cout << "Device CUs: " << dev_cus << std::endl;
@@ -135,7 +133,7 @@ int main(int argc, char *argv[]) try {
 
 	/* verify */
 
-	int sum = d_red.get_access<cl::sycl::access::mode::read>()[0];
+	int sum = d_red.get_host_access(sycl::read_only)[0];
 	const int expected = 17*nels;
 	if (sum != expected)
 		throw std::runtime_error("wrong sum: " + std::to_string(sum) + " != " + std::to_string(expected));

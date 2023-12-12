@@ -6,7 +6,7 @@
 
 struct vecinit
 {
-	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::global_buffer>;
+	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::device>;
 
 	int nels;
 	// LESSON LEARNED: this _has_ to be an accessor, you can't just store the address of the first element you get
@@ -53,10 +53,8 @@ int main(int argc, char *argv[]) {
 
 	/* init queue */
 
-	env_device_selector sel;
-	cl::sycl::queue q(sel, {cl::sycl::property::queue::enable_profiling()});
+	cl::sycl::queue q(env_device_selector, {cl::sycl::property::queue::enable_profiling()});
 
-	std::cout << "Host? " << (q.is_host() ? "true" : "false") << std::endl;
 	std::cout << "Platform name: " << q.get_device().get_platform().get_info<cl::sycl::info::platform::name>() << std::endl;
 	std::cout << "Device name: " << q.get_device().get_info<cl::sycl::info::device::name>() << std::endl;
 
@@ -92,7 +90,7 @@ int main(int argc, char *argv[]) {
 
 	/* verify */
 
-	verify_init(nels, d_vec.get_access<cl::sycl::access::mode::read>());
+	verify_init(nels, d_vec.get_host_access(sycl::read_only));
 
 	std::cout << "OK." << std::endl;
 
