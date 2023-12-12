@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #if SYCL_LANGUAGE_VERSION < 202001
 #error "Source is designed for SYCL 2020 or later"
 #endif
@@ -67,29 +67,29 @@ int env_device_selector(const sycl::device& dev)
 	return -1;
 }
 
-std::string event_status_name(cl::sycl::info::event_command_status status)
+std::string event_status_name(sycl::info::event_command_status status)
 {
 	switch (status) {
-	case cl::sycl::info::event_command_status::submitted: return "submitted";
-	case cl::sycl::info::event_command_status::running: return "running";
-	case cl::sycl::info::event_command_status::complete: return "complete";
+	case sycl::info::event_command_status::submitted: return "submitted";
+	case sycl::info::event_command_status::running: return "running";
+	case sycl::info::event_command_status::complete: return "complete";
 	default: return "unknown (" + std::to_string(int(status)) + ")";
 	}
 }
 
-std::string event_status_name(cl::sycl::event evt)
+std::string event_status_name(sycl::event const& evt)
 {
-	return event_status_name(evt.get_info<cl::sycl::info::event::command_execution_status>());
+	return event_status_name(evt.get_info<sycl::info::event::command_execution_status>());
 }
 
-cl_ulong event_runtime_ns(cl::sycl::event evt)
+cl_ulong event_runtime_ns(sycl::event const& evt)
 {
-	cl_ulong start_time = evt.get_profiling_info<cl::sycl::info::event_profiling::command_start>();
-	cl_ulong end_time = evt.get_profiling_info<cl::sycl::info::event_profiling::command_end>();
+	cl_ulong start_time = evt.get_profiling_info<sycl::info::event_profiling::command_start>();
+	cl_ulong end_time = evt.get_profiling_info<sycl::info::event_profiling::command_end>();
 	return end_time - start_time;
 }
 
-double event_runtime_ms(cl::sycl::event evt)
+double event_runtime_ms(sycl::event const& evt)
 {
 	return event_runtime_ns(evt)*1.0e-6;
 }

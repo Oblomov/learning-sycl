@@ -6,7 +6,7 @@
 
 struct vecinit
 {
-	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::device>;
+	using accessor = sycl::accessor<int, 1, sycl::access::mode::discard_write, sycl::access::target::device>;
 
 	int nels;
 	// LESSON LEARNED: this _has_ to be an accessor, you can't just store the address of the first element you get
@@ -18,7 +18,7 @@ struct vecinit
 		vec(vec_)
 	{}
 
-	void operator()(cl::sycl::item<1> item) const {
+	void operator()(sycl::item<1> item) const {
 		int i = item.get_id(0);
 		if (i < nels) {
 			vec[i] = nels - i;
@@ -49,24 +49,24 @@ int main(int argc, char *argv[]) {
 		throw std::invalid_argument("nels < 0");
 
 	/* allocate memory */
-	auto d_vec = cl::sycl::buffer<int>(nels);
+	auto d_vec = sycl::buffer<int>(nels);
 
 	/* init queue */
 
-	cl::sycl::queue q(env_device_selector, {cl::sycl::property::queue::enable_profiling()});
+	sycl::queue q(env_device_selector, {sycl::property::queue::enable_profiling()});
 
-	std::cout << "Platform name: " << q.get_device().get_platform().get_info<cl::sycl::info::platform::name>() << std::endl;
-	std::cout << "Device name: " << q.get_device().get_info<cl::sycl::info::device::name>() << std::endl;
+	std::cout << "Platform name: " << q.get_device().get_platform().get_info<sycl::info::platform::name>() << std::endl;
+	std::cout << "Device name: " << q.get_device().get_info<sycl::info::device::name>() << std::endl;
 
 	/* enqueue vecinit */
 	const int gws = nels;
 
 	std::cout << "Submit ..." << std::endl;
-	auto init_evt = q.submit([&](cl::sycl::handler& hand) {
-		auto vec = d_vec.get_access<cl::sycl::access::mode::discard_write>(hand);
+	auto init_evt = q.submit([&](sycl::handler& hand) {
+		auto vec = d_vec.get_access<sycl::access::mode::discard_write>(hand);
 
 		auto kernel = vecinit(nels, vec);
-		hand.parallel_for(cl::sycl::range<1>(gws), kernel);
+		hand.parallel_for(sycl::range<1>(gws), kernel);
 	});
 
 	/* sync check */

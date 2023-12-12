@@ -6,17 +6,17 @@
 
 struct vecinit
 {
-	using accessor = cl::sycl::accessor<int, 1, cl::sycl::access::mode::discard_write, cl::sycl::access::target::device>;
+	using accessor = sycl::accessor<int, 1, sycl::access::mode::discard_write, sycl::access::target::device>;
 
 	int nels;
 	accessor vec;
 
-	vecinit(cl::sycl::handler& hand, cl::sycl::buffer<int>& buf) :
+	vecinit(sycl::handler& hand, sycl::buffer<int>& buf) :
 		nels(buf.size()),
-		vec(buf.get_access<cl::sycl::access::mode::discard_write>(hand))
+		vec(buf.get_access<sycl::access::mode::discard_write>(hand))
 	{}
 
-	void operator()(cl::sycl::item<1> item) const {
+	void operator()(sycl::item<1> item) const {
 		int i = item.get_id(0);
 		if (i < nels) {
 			vec[i] = 17;
@@ -27,30 +27,30 @@ struct vecinit
 template<typename T>
 struct reduce
 {
-	using accessor_in   = cl::sycl::accessor<T, 1, cl::sycl::access::mode::read,       cl::sycl::access::target::device>;
-	using accessor_out  = cl::sycl::accessor<T, 1, cl::sycl::access::mode::write,      cl::sycl::access::target::device>;
-	using accessor_lmem = cl::sycl::local_accessor<T, 1>;
+	using accessor_in   = sycl::accessor<T, 1, sycl::access::mode::read,       sycl::access::target::device>;
+	using accessor_out  = sycl::accessor<T, 1, sycl::access::mode::write,      sycl::access::target::device>;
+	using accessor_lmem = sycl::local_accessor<T, 1>;
 
 	int nels;
 	accessor_in in;
 	accessor_out out;
 	accessor_lmem lmem;
 
-	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& in_, cl::sycl::buffer<int>& out_, int lws) :
+	reduce(sycl::handler& hand, sycl::buffer<int>& in_, sycl::buffer<int>& out_, int lws) :
 		nels(in_.size()),
-		in(in_.get_access<cl::sycl::access::mode::read>(hand)),
-		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
+		in(in_.get_access<sycl::access::mode::read>(hand)),
+		out(out_.get_access<sycl::access::mode::write>(hand)),
 		lmem(accessor_lmem(lws, hand))
 	{}
 
-	reduce(cl::sycl::handler& hand, cl::sycl::buffer<int>& out_, int lws) :
+	reduce(sycl::handler& hand, sycl::buffer<int>& out_, int lws) :
 		nels(out_.size()),
-		in(out_.get_access<cl::sycl::access::mode::read>(hand)),
-		out(out_.get_access<cl::sycl::access::mode::write>(hand)),
+		in(out_.get_access<sycl::access::mode::read>(hand)),
+		out(out_.get_access<sycl::access::mode::write>(hand)),
 		lmem(accessor_lmem(lws, hand))
 	{}
 
-	void operator()(cl::sycl::nd_item<1> item) const {
+	void operator()(sycl::nd_item<1> item) const {
 		int gi = item.get_global_id(0);
 		T acc = T(0);
 		while (gi < nels) {
@@ -62,7 +62,7 @@ struct reduce
 
 		int active = item.get_local_range(0)/2;
 		while (active > 0) {
-			item.barrier(cl::sycl::access::fence_space::local_space);
+			item.barrier(sycl::access::fence_space::local_space);
 			if (li < active) {
 				acc += lmem[li + active];
 				lmem[li] = acc;
@@ -89,33 +89,33 @@ int main(int argc, char *argv[]) try {
 
 	/* init queue */
 
-	cl::sycl::queue q(env_device_selector, {cl::sycl::property::queue::enable_profiling()});
+	sycl::queue q(env_device_selector, {sycl::property::queue::enable_profiling()});
 
 	auto q_dev = q.get_device();
-	auto dev_cus = q_dev.get_info<cl::sycl::info::device::max_compute_units>();
+	auto dev_cus = q_dev.get_info<sycl::info::device::max_compute_units>();
 
-	std::cout << "Platform name: " << q_dev.get_platform().get_info<cl::sycl::info::platform::name>() << std::endl;
-	std::cout << "Device name: " << q_dev.get_info<cl::sycl::info::device::name>() << std::endl;
+	std::cout << "Platform name: " << q_dev.get_platform().get_info<sycl::info::platform::name>() << std::endl;
+	std::cout << "Device name: " << q_dev.get_info<sycl::info::device::name>() << std::endl;
 	std::cout << "Device CUs: " << dev_cus << std::endl;
 
 	/* allocate memory */
 	int nwg = nwg_cu*dev_cus;
-	auto d_vec = cl::sycl::buffer<int>(nels);
-	auto d_red = cl::sycl::buffer<int>(nwg);
+	auto d_vec = sycl::buffer<int>(nels);
+	auto d_red = sycl::buffer<int>(nwg);
 
 	/* enqueue vecinit */
 	std::cout << "Submit init ..." << std::endl;
-	auto init_evt = q.submit([&](cl::sycl::handler& hand) {
-		hand.parallel_for(cl::sycl::range<1>(nels), vecinit(hand, d_vec));
+	auto init_evt = q.submit([&](sycl::handler& hand) {
+		hand.parallel_for(sycl::range<1>(nels), vecinit(hand, d_vec));
 	});
 
 	std::cout << "Submit reduce (" + std::to_string(nwg) + "/" + std::to_string(lws) + ") ..." << std::endl;
-	auto reduce_pass1_evt = q.submit([&](cl::sycl::handler& hand) {
-		hand.parallel_for(cl::sycl::nd_range<1>(lws*nwg, lws), reduce<int>(hand, d_vec, d_red, lws));
+	auto reduce_pass1_evt = q.submit([&](sycl::handler& hand) {
+		hand.parallel_for(sycl::nd_range<1>(lws*nwg, lws), reduce<int>(hand, d_vec, d_red, lws));
 	});
 
-	auto reduce_pass2_evt = q.submit([&](cl::sycl::handler& hand) {
-		hand.parallel_for(cl::sycl::nd_range<1>(lws, lws), reduce<int>(hand, d_red, lws));
+	auto reduce_pass2_evt = q.submit([&](sycl::handler& hand) {
+		hand.parallel_for(sycl::nd_range<1>(lws, lws), reduce<int>(hand, d_red, lws));
 	});
 
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) try {
 	std::cout << "OK." << std::endl;
 
 	return 0;
-} catch (cl::sycl::exception& e) {
+} catch (sycl::exception& e) {
 	std::cerr << e.what() << std::endl;
 	throw e;
 }
