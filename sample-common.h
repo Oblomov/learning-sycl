@@ -9,23 +9,21 @@
 #error "Source is designed for SYCL 2020 or later"
 #endif
 
-/* Device selector that uses OCL_PLATFORM and OCL_DEVICE environment variable
- * to select an OpenCL platform and device. If none has been requested,
+/* Device selector that uses SYCL_PLATFORM and SYCL_DEVICE environment variable
+ * to select a SYCL platform and device, falling back to the default in case of no override
  */
 int env_device_selector(const sycl::device& dev)
 {
 	bool over = false;
-	cl_platform_id p = NULL;
-	cl_device_id d = NULL;
 
 	int p_num = 0, d_num = 0;
-	const char *p_env = std::getenv("OCL_PLATFORM");
+	const char *p_env = std::getenv("SYCL_PLATFORM");
 	if (p_env) {
 		over = true;
 		p_num = std::atoi(p_env);
 	}
 
-	const char *d_env = std::getenv("OCL_DEVICE");
+	const char *d_env = std::getenv("SYCL_DEVICE");
 	if (d_env) {
 		over = true;
 		d_num = std::atoi(d_env);
@@ -33,37 +31,28 @@ int env_device_selector(const sycl::device& dev)
 
 	if (!over) return sycl::default_selector_v(dev);
 
-	cl_uint n;
-	cl_int err = clGetPlatformIDs(0, NULL, &n);
-	if (err != CL_SUCCESS || p_num >= n)
+	auto platforms = sycl::platform::get_platforms();
+	const size_t np = platforms.size();
+
+	if (p_num >= np)
 		throw std::runtime_error("cannnot select OpenCL platform #" + std::to_string(p_num) +
-			" (err: " + std::to_string(err) + ")");
+			" (only " + std::to_string(np) + " platforms present)");
 
-	cl_platform_id *plats = new cl_platform_id[n];
-	err = clGetPlatformIDs(n, plats, NULL);
-	if (err != CL_SUCCESS) {
-		delete[] plats;
-		throw std::runtime_error("failed to get OpenCL platform #" + std::to_string(p_num) +
-			" (err: " + std::to_string(err) + ")");
-	}
-	p = plats[p_num];
-	delete[] plats;
+	const auto& p = platforms[p_num];
 
-	err = clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, 0, NULL, &n);
-	if (err != CL_SUCCESS || d_num >= n)
-		throw std::runtime_error("cannnot select OpenCL device #" + std::to_string(d_num) +
-			" (err: " + std::to_string(err) + ")");
-	cl_device_id *devs = new cl_device_id[n];
-	err = clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, n, devs, NULL);
-	if (err != CL_SUCCESS) {
-		delete[] devs;
-		throw std::runtime_error("failed to get OpenCL device #" + std::to_string(d_num) +
-			" (err: " + std::to_string(err) + ")");
-	}
-	d = devs[d_num];
-	delete[] devs;
+	auto devices = p.get_devices();
+	const size_t nd = devices.size();
 
-	if (sycl::get_native<sycl::backend::opencl>(dev) == d) return 100;
+	if (d_num >= nd)
+		throw std::runtime_error("cannnot select OpenCL device #" + std::to_string(d_num)
+			+ " (only " + std::to_string(nd) + " devices available on platform #"
+			+ std::to_string(p_num) + " "
+			+ p.get_info<sycl::info::platform::name>()
+			+ ")");
+
+	const auto& d = devices[d_num];
+
+	if (dev == d) return 100;
 	return -1;
 }
 
