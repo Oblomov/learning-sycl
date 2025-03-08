@@ -7,7 +7,7 @@ CXX != for s in ${CXX} ; do command -v $$s && break ; done
 CXX := $(CXX)$(CXX_$(CXX))
 
 SYCL_PATH != dirname $$(command -v $(CXX) || echo .)
-CXX_Model != $(CXX) --version | head -n1 | cut -f2 -d\ 
+CXX_Model != $(CXX) --acpp-version > /dev/null 2>&1 && echo acpp || $(CXX) --version | head -n1 | cut -f2 -d\ 
 
 CXXFLAGS_ComputeCpp = -sycl-driver
 CXXFLAGS_oneAPI = -fsycl
@@ -30,8 +30,6 @@ LDLIBS_ComputeCpp = -lComputeCpp
 LDLIBS ?=
 LDLIBS += $(LDLIBS_${CXX_Model})
 LDLIBS += -lOpenCL
-
-
 
 TARGETS = sample sample-select sample-reduce syclinfo
 
