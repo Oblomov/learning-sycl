@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 #include <sycl/sycl.hpp>
 #if SYCL_LANGUAGE_VERSION < 202001
@@ -71,10 +72,10 @@ std::string event_status_name(sycl::event const& evt)
 	return event_status_name(evt.get_info<sycl::info::event::command_execution_status>());
 }
 
-cl_ulong event_runtime_ns(sycl::event const& evt)
+uint64_t event_runtime_ns(sycl::event const& evt)
 {
-	cl_ulong start_time = evt.get_profiling_info<sycl::info::event_profiling::command_start>();
-	cl_ulong end_time = evt.get_profiling_info<sycl::info::event_profiling::command_end>();
+	uint64_t start_time = evt.get_profiling_info<sycl::info::event_profiling::command_start>();
+	uint64_t end_time = evt.get_profiling_info<sycl::info::event_profiling::command_end>();
 	return end_time - start_time;
 }
 
