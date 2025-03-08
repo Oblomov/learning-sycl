@@ -40,5 +40,13 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS)
 
-.PHONY: clean all
+show:
+	@printf 'CXX=%s\n' "$(CXX)"
+	@printf 'CXX_Model=%s\n' "$(CXX_Model)"
+	@printf 'CPPFLAGS=%s\n' "$(CPPFLAGS)"
+	@printf 'CXXFLAGS=%s\n' "$(CXXFLAGS)"
+	@printf 'LDFLAGS=%s\n' "$(LDFLAGS)"
+	@printf 'LDLIBS=%s\n' "$(LDLIBS)"
+
+.PHONY: clean all show
 
