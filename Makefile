@@ -13,6 +13,8 @@ CXXFLAGS_ComputeCpp = -sycl-driver
 CXXFLAGS_oneAPI = -fsycl
 CXXFLAGS_clang = -fsycl
 
+CPPFLAGS_acpp = -DACPP_STRICT_ACCESSOR_DEDUCTION
+
 CXXFLAGS ?=
 CXXFLAGS += -g -Wall -O3
 CXXFLAGS += $(CXXFLAGS_${CXX_Model})
@@ -20,6 +22,8 @@ CXXFLAGS += $(CXXFLAGS_${CXX_Model})
 CPPFLAGS ?=
 CPPFLAGS += -I$(SYCL_PATH)/../include
 CPPFLAGS += -I$(SYCL_PATH)/../include/sycl
+
+CPPFLAGS += $(CPPFLAGS_${CXX_Model})
 
 LDFLAGS ?=
 LDFLAGS += -L$(SYCL_PATH)/../lib
