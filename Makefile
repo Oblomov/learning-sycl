@@ -1,5 +1,5 @@
 # Known SYCL compilers. Override with `make CXX=/path/to/compiler`
-CXX := compute++ icpx dpcpp
+CXX := compute++ icpx dpcpp acpp
 CXX_ := icpx
 
 CXX != for s in ${CXX} ; do command -v $$s && break ; done
@@ -14,6 +14,7 @@ CXXFLAGS_oneAPI = -fsycl
 CXXFLAGS_clang = -fsycl
 
 CPPFLAGS_acpp = -DACPP_STRICT_ACCESSOR_DEDUCTION
+CPPFLAGS_acpp = -I$(SYCL_PATH)/../include/AdaptiveCpp
 
 CXXFLAGS ?=
 CXXFLAGS += -g -Wall -O3
