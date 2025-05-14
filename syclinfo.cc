@@ -1,6 +1,11 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 
+// AdaptiveCpp doesn't define ostream for the backend_id unless this file is included
+#ifdef SYCL_IMPLEMENTATION_ACPP
+#include <hipSYCL/runtime/serialization/serialization.hpp>
+#endif
+
 int main(int argc, char *argv[])
 {
 
