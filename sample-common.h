@@ -36,7 +36,7 @@ int env_device_selector(const sycl::device& dev)
 	const size_t np = platforms.size();
 
 	if (p_num >= np)
-		throw std::runtime_error("cannnot select OpenCL platform #" + std::to_string(p_num) +
+		throw std::runtime_error("cannnot select SYCL platform #" + std::to_string(p_num) +
 			" (only " + std::to_string(np) + " platforms present)");
 
 	const auto& p = platforms[p_num];
@@ -45,7 +45,7 @@ int env_device_selector(const sycl::device& dev)
 	const size_t nd = devices.size();
 
 	if (d_num >= nd)
-		throw std::runtime_error("cannnot select OpenCL device #" + std::to_string(d_num)
+		throw std::runtime_error("cannnot select SYCL device #" + std::to_string(d_num)
 			+ " (only " + std::to_string(nd) + " devices available on platform #"
 			+ std::to_string(p_num) + " "
 			+ p.get_info<sycl::info::platform::name>()
