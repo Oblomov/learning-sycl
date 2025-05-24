@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "Submit ..." << std::endl;
 	auto init_evt = q.submit([&](sycl::handler& hand) {
-		auto vec = d_vec.get_access<sycl::access::mode::discard_write>(hand);
+		vecinit::accessor vec = d_vec.get_access<sycl::access::mode::discard_write>(hand);
 
 		auto kernel = vecinit(nels, vec);
 		hand.parallel_for(sycl::range<1>(gws), kernel);
